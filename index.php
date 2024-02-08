@@ -65,16 +65,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["download"])){
 
     $grayscaleFile = $_POST['grayscaledfile'];
     
-        if(!empty($grayscaleFile)){
-        
-            $grayscaledImagePath = $grayscaleFile;
-        header('Content-Type: image/jpeg');
-        header('Content-Disposition: attachment; filename="downloaded_image_'.time().'.jpeg"');
+    $grayscaledImagePath = $grayscaleFile;
+    header('Content-Type: image/jpeg');
+    header('Content-Disposition: attachment; filename="downloaded_image_'.time().'.jpeg"');
 
-        readfile($grayscaledImagePath);
-    }else{
-        echo "Upload File First!";
-    }
+    readfile($grayscaledImagePath);
 }
 
 ?>
@@ -119,7 +114,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["download"])){
         <h1 class="text-center p-2 title">Image Grayscale Editor</h1>
         <div class="h-100">
             <div class="row text-center">
-                <div class="col-5 border rounded-2 image1">
+                <div class="col-md-5 border rounded-2 image1">
                     <div class="p-3">
                         <form action="" method="POST" enctype="multipart/form-data">
                             <input type="file" name="image">
@@ -134,9 +129,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["download"])){
                         </div>
                     </div>
                 </div>
-                <div class="col-2">
+                <div class="col-md-2 p-2">
                 </div>
-                <div class="col-5 border rounded-2">
+                <div class="col-md-5 border rounded-2">
                     <div class="p-3">
                             <div class="d-flex">
                                 <div class="w-100">
@@ -162,7 +157,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["download"])){
                     </div>
                 </div>
             </div>
-            <form action="" method="POST">
+            <form action="" method="POST" class="p-2">
                 <input type="hidden" name="targetFile" value="<?php echo $targetFile; ?>">
                 <button type="submit" name="grayscaleButton" class="btn btn-secondary mb-3">Convert to Grayscale</button>
             </form>
