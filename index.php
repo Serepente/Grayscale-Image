@@ -32,8 +32,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
     }
 }
 $sourceImage = "";
+$grayscaleFile='';
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
-        $targetFile = $_POST['targetFile'];
+       $targetFile = $_POST['targetFile'];
 
         if (!empty($targetFile) && file_exists($targetFile)) {
 
@@ -51,13 +52,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
                     exit;
                 }
                 imagefilter($sourceImage, IMG_FILTER_GRAYSCALE);
-                $grayscaleFile = "grayscale_" . basename($targetFile);
+                $grayscaleFile = "grayscaled/grayscale_" . basename($targetFile);
                 imagejpeg($sourceImage, $grayscaleFile); 
                 imagedestroy($sourceImage);
-
         } else {
             echo "Invalid file path.";
         }
+    }
+}
+
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["download"])){
+
+    $grayscaleFile = $_POST['grayscaledfile'];
+    
+        if(!empty($grayscaleFile)){
+        
+            $grayscaledImagePath = $grayscaleFile;
+        header('Content-Type: image/jpeg');
+        header('Content-Disposition: attachment; filename="downloaded_image_'.time().'.jpeg"');
+
+        readfile($grayscaledImagePath);
+    }else{
+        echo "Upload File First!";
     }
 }
 
@@ -69,6 +85,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <title>Image Grayscale Editor</title>
 </head>
 <style>
@@ -77,6 +96,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
         color: #fff;
         text-align: center;
         margin: 50px;
+        
+    }
+    .title{
+        font-family: "Black Ops One", system-ui;
+        font-weight: 400;
+        font-style: normal;
     }
 
     .border {
@@ -91,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
 </style>
 <body>
     <div class="container-fluid" style="background-size: cover;">
-        <h1 class="text-center p-5">Image Grayscale Editor</h1>
+        <h1 class="text-center p-2 title">Image Grayscale Editor</h1>
         <div class="h-100">
             <div class="row text-center">
                 <div class="col-5 border rounded-2 image1">
@@ -113,7 +138,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["grayscaleButton"])) {
                 </div>
                 <div class="col-5 border rounded-2">
                     <div class="p-3">
-                        <h2>Grayscaled Image</h2>
+                            <div class="d-flex">
+                                <div class="w-100">
+                                    <h2>Grayscaled Image</h2>
+                                </div>
+                                <div class="flex-shrink-1 mt-2">
+                                    <a class="" type="button" data-bs-toggle="dropdown" aria-expanded="false" ><i class="fa-solid fa-ellipsis-vertical fa-rotate-by fa-lg" style="color: #ffffff; --fa-rotate-angle: 301E67deg;""></i></a>
+                                    <ul class="dropdown-menu">
+                                        <form method="POST">
+                                            <input type="hidden" name="grayscaledfile" value="<?php echo $grayscaleFile; ?>">
+                                            <li><button class="dropdown-item" name="download" type="submit">Download Image</button></li>
+                                        </form>
+                                    </ul>
+                                </div>
+                            </div>
                         <div>
                             <?php 
                             if ($sourceImage) {

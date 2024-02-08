@@ -5,8 +5,8 @@ document.getElementById('img_upload').addEventListener('change', function() {
         reader.onload = function(event) {
             var image = document.createElement('img');
             image.src = event.target.result;
-            image.style.maxWidth = '100%'; // Adjust image size if needed
-            document.getElementById('image-preview').innerHTML = ''; // Clear previous image if any
+            image.style.maxWidth = '100%';
+            document.getElementById('image-preview').innerHTML = ''; 
             document.getElementById('image-preview').appendChild(image);
         };
         reader.readAsDataURL(file);
