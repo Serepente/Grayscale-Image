@@ -12,3 +12,10 @@ document.getElementById('img_upload').addEventListener('change', function() {
         reader.readAsDataURL(file);
     }
 });
+
+const myModal = document.getElementById('myModal')
+const myInput = document.getElementById('myInput')
+
+myModal.addEventListener('shown.bs.modal', () => {
+  myInput.focus()
+})
