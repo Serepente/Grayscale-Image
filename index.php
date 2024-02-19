@@ -1,5 +1,7 @@
 <?php
 session_start();
+error_reporting(0);
+// include 'filters.php';
 function generateUniqueFileName($originalFileName)
 {
     $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
@@ -15,14 +17,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
         $targetDir = "img/uploads/";
         $targetFile = $targetDir . generateUniqueFileName($_FILES["image"]["name"]);
 
-        
+
         if (file_exists($targetFile)) {
             echo "Sorry, file already exists.";
         } else {
        
             if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetFile)) {
                 echo "The file " . generateUniqueFileName($_FILES["image"]["name"]) . " has been uploaded.";
-                $_SESSION['uploadedFilePath'] = $targetFile; 
+                $_SESSION['uploadedFilePaths'] = $targetFile; 
             } else {
                 echo "Sorry, there was an error uploading your file.";
             }
@@ -31,6 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
         echo "No file uploaded or an error occurred.";
     }
 }
+// $_SESSION['uploadedFilePaths'] = $targetFile; 
 
 $sourceImage = "";
 $editedImage='';
@@ -100,8 +103,6 @@ if(isset($_POST["selectButton"])){
         imagejpeg($outputImage, $editedImage);
         imagedestroy($sourceImage);
         imagedestroy($outputImage);
-    }else if($convertionType == 'Filters'){
-
     }
 }
 $convertionType = '';
@@ -117,15 +118,24 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         header('Content-Disposition: attachment; filename="downloaded_image_'.time().'.jpeg"');
 
         readfile($editedImagePath);
-    }else if(isset($_POST["filters"])){
-        include 'filters.php';
+    }else if(isset($_POST["download-filters-btn"])){
+
+        $filteredImages = $_POST['download-filters'];
+
+        $editedImagePath = $filteredImages;
+        header('Content-Type: image/jpeg');
+        header('Content-Disposition: attachment; filename="downloaded_image_'.time().'.jpeg"');
+
+        readfile($editedImagePath);
     }
 }
+if (isset($_SESSION['thumbnails'])) {
 
-if (isset($_SESSION['editedImageBrightness'])) {
-    $editedImageBrightness = $_SESSION['editedImageBrightness'];
-    echo $editedImageBrightness;
+    include 'filters.php';
+    $thumbnails = $_SESSION['thumbnails'];
+
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -137,7 +147,7 @@ if (isset($_SESSION['editedImageBrightness'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-    <title>Image Grayscale Editor</title>
+    <title>PicSure</title>
 </head>
 <style>
     body {
@@ -177,11 +187,15 @@ if (isset($_SESSION['editedImageBrightness'])) {
         background: #ff0000; 
         cursor: pointer; 
         border-radius: 50%; 
+    }.filter-img:hover{
+        transform: scale(1.15);
+        transition: .5s;
+        cursor: pointer;
     }
 </style>
 <body>
     <div class="container-fluid" style="background-size: cover;">
-        <h1 class="text-center p-2 title">Image Grayscale Editor</h1>
+        <h1 class="text-center p-2 title">PicSure Photo Editor</h1>
         <form action="" method="POST">
             <div class="d-flex flex-row mb-3 justify-content-center">
                 <div class="p-3">
@@ -203,6 +217,7 @@ if (isset($_SESSION['editedImageBrightness'])) {
                 <div class="col-md-5 border rounded-2 image1">
                     <div class="p-3">
                         <form action="" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="uid" value="<?php echo $uid; ?>">
                             <input type="file" name="image">
                             <button type="submit" name="submit">Upload</button>
                         </form>
@@ -218,108 +233,102 @@ if (isset($_SESSION['editedImageBrightness'])) {
                 <div class="col-md-2 p-2">
                 </div>
                 <div class="col-md-5 border rounded-2">
-                    <div class="p-3">
+                    <div class="p-1">
                             <div class="d-flex">
                                 <div class="w-100">
                                     <h2>Converted Image</h2>
                                 </div>
-                                <div class="flex-shrink-1 mt-2">
-                                    <a class="" type="button" data-bs-toggle="dropdown" aria-expanded="false" ><i class="fa-solid fa-ellipsis-vertical fa-rotate-by fa-lg" style="color: #ffffff; --fa-rotate-angle: 301E67deg;""></i></a>
+                                <div class="flex-shrink-1">
+                                    <a class="m-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" ><i class="fa-solid fa-ellipsis-vertical fa-rotate-by fa-lg" style="color: #ffffff; --fa-rotate-angle: 301E67deg;""></i></a>
                                     <ul class="dropdown-menu">
                                         <form method="POST">
-                                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#filtersModal" type="button" name="filters" disabled>Edit Filters</button></li>
+                                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#filtersModal" type="button" name="filters">Edit Filters</button></li>
                                             <input type="hidden" name="grayscaledfile" value="<?php echo $editedImage; ?>">
                                             <li><button class="dropdown-item" name="download" type="submit">Download Image</button></li>
                                         </form>
                                     </ul>
                                 </div>
                                 <div class="modal fade" id="filtersModal" tabindex="-1" aria-labelledby="filtersModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-fullscreen" style="background-color: transparent;">
-                                    <div class="modal-content" style="background-color: #141d26;">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="filtersModalLabel">Edit Filters</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <h3>Filters</h3>
-                                                <div class="border rounded-2">
-                                                <div class="d-flex flex-row mb-5">
-                                                    <div class="P-2 filter-img">
-                                                        <img src="<?php echo $editedImageBrightness ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>  
-                                                </div>
-                                                <div class="d-flex flex-row mb-5">
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>  
-                                                </div>
-                                                <div class="d-flex flex-row mb-5">
-                                                <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div>
-                                                    <div class="P-2">
-                                                        <img src="<?php echo $targetFile ?>" alt="" class="img-filter">
-                                                    </div> 
-                                                </div>
+                                    <div class="modal-dialog modal-fullscreen" style="background-color: transparent;">
+                                        <div class="modal-content" style="background-color: #141d26;">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="filtersModalLabel">Edit Filters</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <?php 
-                                                if ($targetFile) {
-                                                    echo '<img src="' . $targetFile . '" alt="Uploaded Image" class="" style="max-width: 100%; height: 90%;">'; 
-                                                }
-                                            ?>
-                                        </div>
-                                        <div class="col-md-4">
-                                                <h3 class="text-align-center">Adjust</h3>
-                                                <div class="border rounded-2 p-3">
-                                                    <h3>Colors</h3>
-                                                    <input type="range" class="form-range" min="0" max="5" value="0" id="redRange">
-                                                    <label for="redRange" class="form-label">Red</label>
-                                                    <input type="range" class="form-range" min="0" max="5" value="0" id="blueRange">
-                                                    <label for="blueRange" class="form-label">Blue</label>
-                                                    <input type="range" class="form-range" min="0" max="5" value="0" id="greenRange">
-                                                    <label for="greenRange" class="form-label">Green</label>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                        <div class="col-md-4">
+                                                            <h3>Filters</h3>
+                                                            <?php if (isset($_SESSION['thumbnails'])): ?>
+                                                                <div class="border rounded-2 p-3">
+                                                                    <div class="row">
+                                                                        <?php $counter = 0; ?>
+                                                                        <?php foreach ($_SESSION['thumbnails'] as $filterName => $thumbnailPath): ?>
+                                                                            <?php if ($counter > 0 && $counter % 4 == 0): ?>
+                                                                                </div><div class="row">
+                                                                            <?php endif; ?>
+                                                                            <div class="col-md-3 filter-img mb-3" onclick="updateMainImage('<?php echo htmlspecialchars($thumbnailPath, ENT_QUOTES, 'UTF-8'); ?>')">
+                                                                                <img src="<?php echo htmlspecialchars($thumbnailPath, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($filterName, ENT_QUOTES, 'UTF-8'); ?>" class="img-fluid img-filter">
+                                                                            </div>
+                                                                            <?php $counter++; ?>
+                                                                        <?php endforeach; ?>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                
+                                                        <div class="col-md-4">
+                                                            <?php if ($targetFile): ?>
+                                                                <img src="<?php echo htmlspecialchars($targetFile, ENT_QUOTES, 'UTF-8'); ?>" alt="Uploaded Image" id="mainImage" class="" style="max-width: 100%; height: 90%;">
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <div class="col-md-4">
+                                                            <h3 class="text-align-center">Adjust</h3>
+                                                            <div class="border rounded-2 p-3 m-4">
+                                                                <div class="list-group list-group-horizontal mb-3" id="list-tab" role="tablist">
+                                                                    <a class="list-group-item list-group-item-action active" id="list-colors-list" data-bs-toggle="list" href="#list-colors" role="tab" aria-controls="list-home">Colors</a>
+                                                                    <a class="list-group-item list-group-item-action" id="list-profile-list" data-bs-toggle="list" href="#list-profile" role="tab" aria-controls="list-profile">Advance</a>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                <div class="tab-content" id="nav-tabContent">
+                                                                    <div class="tab-pane fade show active" id="list-colors" role="tabpanel" aria-labelledby="list-colors-list">
+                                                                        <input type="range" class="form-range" min="0" max="50" value="0" id="redRange">
+                                                                        <label for="redRange" class="form-label">Red</label>
+                                                                        <input type="range" class="form-range" min="0" max="50" value="0" id="blueRange">
+                                                                        <label for="blueRange" class="form-label">Blue</label>
+                                                                        <input type="range" class="form-range" min="0" max="50" value="0" id="greenRange">
+                                                                        <label for="greenRange" class="form-label">Green</label>
+                                                                    </div>
+                                                                    <div class="tab-pane fade" id="list-profile" role="tabpanel" aria-labelledby="list-profile-list">
+                                                                        <input type="range" class="form-range" min="0" max="127" value="0" id="opacityRange">
+                                                                        <label for="opacityRange" class="form-label">Opacity</label>
+                                                                        <input type="range" class="form-range" min="0" max="50" value="0" id="brightnessRange">
+                                                                        <label for="brightnessRange" class="form-label">Brightness</label>
+                                                                        <input type="range" class="form-range disable"  min="0" max="255" value="0" id="saturationRange">
+                                                                        <label for="saturationRange" class="form-label">Saturation</label>
+                                                                        <input type="range" class="form-range" min="0" max="30" value="0" id="blurRange">
+                                                                        <label for="blurRange" class="form-label">Blur</label>
 
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
+                                                    <form action="" method="POST">
+                                                        <input type="hidden" name="download-filters" value="<?php echo $targetfile; ?>">
+                                                        <button type="submit" class="btn btn-primary" name="download-filters-btn" >Save changes</button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
-                                        <button type="button" class="btn btn-primary">Save changes</button>
-                                    </div>
-                                    </div>
-                                </div>
                                 </div>
                             </div>
-                        <div>
+                        <div class="p-2">
                             <?php 
                             if ($sourceImage) {
                                 echo '<img src="' . $editedImage . '" alt="Grayscaled Image" style="max-width: 100%; max-height: 100%;">'; 
@@ -334,5 +343,47 @@ if (isset($_SESSION['editedImageBrightness'])) {
     <!-- JS Links -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script src="js/main.js"></script>
+    <script>
+    function updateMainImage(imagePath) {
+    var mainImage = document.getElementById('mainImage');
+    mainImage.src = imagePath;
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+
+    document.getElementById('redRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('greenRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('blueRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('opacityRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('saturationRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('brightnessRange').addEventListener('input', applyColorAdjustments);
+    document.getElementById('blurRange').addEventListener('input', applyColorAdjustments);
+
+    function applyColorAdjustments() {
+        var redRange = document.getElementById('redRange').value;
+        var greenRange = document.getElementById('greenRange').value;
+        var blueRange = document.getElementById('blueRange').value;
+        var saturationRange = document.getElementById('opacityRange').value;
+        var saturationRange = document.getElementById('saturationRange').value;
+        var brightnessRange = document.getElementById('brightnessRange').value;
+        var blurRange = document.getElementById('blurRange').value;
+        var targetFile = '<?php echo $targetFile; ?>';
+
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'colors.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        xhr.onload = function() {
+            if (this.status == 200) {
+                document.getElementById('mainImage').src = 'img/color_adjusted/' + this.responseText + '?t=' + new Date().getTime();
+            }
+        };
+
+        xhr.send(`redRange=${redRange}&greenRange=${greenRange}&blueRange=${blueRange}&opacityRange=${opacityRange}&saturationRange=${saturationRange}&brightnessRange=${brightnessRange}&blurRange=${blurRange}&targetFile=${targetFile}`);
+    }
+});
+
+
+    </script>
 </body>
 </html>
